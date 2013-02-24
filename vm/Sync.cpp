@@ -101,10 +101,6 @@ Monitor* dvmCreateMonitor(Object* obj)
         ALOGE("Unable to allocate monitor");
         dvmAbort();
     }
-    if (((u4)mon & 7) != 0) {
-        ALOGE("Misaligned monitor: %p", mon);
-        dvmAbort();
-    }
     mon->obj = obj;
     dvmInitMutex(&mon->lock);
 
@@ -762,6 +758,12 @@ done:
             dvmThrowInterruptedException(NULL);
         }
     }
+#ifdef NDEBUG
+    // ret is used only in assert() statements ==> not used in
+    // NDEBUG builds at all, causing variable defined but not
+    // used warning, breaking the build with -Werror
+    (void)ret;
+#endif
 }
 
 /*
