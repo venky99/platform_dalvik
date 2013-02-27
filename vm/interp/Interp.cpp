@@ -766,9 +766,7 @@ static void updateDebugger(const Method* method, const u2* pc, const u4* fp,
     if (pCtrl->active && pCtrl->thread == self) {
         int frameDepth;
         bool doStop = false;
-#ifndef LOG_NDEBUG
         const char* msg = NULL;
-#endif
 
         assert(!dvmIsNativeMethod(method));
 
@@ -780,20 +778,14 @@ static void updateDebugger(const Method* method, const u2* pc, const u4* fp,
              */
             if (pCtrl->method != method) {
                 doStop = true;
-#ifndef LOG_NDEBUG
                 msg = "new method";
-#endif
             } else if (pCtrl->size == SS_MIN) {
                 doStop = true;
-#ifndef LOG_NDEBUG
                 msg = "new instruction";
-#endif
             } else if (!dvmAddressSetGet(
                     pCtrl->pAddressSet, pc - method->insns)) {
                 doStop = true;
-#ifndef LOG_NDEBUG
                 msg = "new line";
-#endif
             }
         } else if (pCtrl->depth == SD_OVER) {
             /*
@@ -807,22 +799,16 @@ static void updateDebugger(const Method* method, const u2* pc, const u4* fp,
             if (frameDepth < pCtrl->frameDepth) {
                 /* popped up one or more frames, always trigger */
                 doStop = true;
-#ifndef LOG_NDEBUG
                 msg = "method pop";
-#endif
             } else if (frameDepth == pCtrl->frameDepth) {
                 /* same depth, see if we moved */
                 if (pCtrl->size == SS_MIN) {
                     doStop = true;
-#ifndef LOG_NDEBUG
                     msg = "new instruction";
-#endif
                 } else if (!dvmAddressSetGet(pCtrl->pAddressSet,
                             pc - method->insns)) {
                     doStop = true;
-#ifndef LOG_NDEBUG
                     msg = "new line";
-#endif
                 }
             }
         } else {
@@ -838,9 +824,7 @@ static void updateDebugger(const Method* method, const u2* pc, const u4* fp,
             frameDepth = dvmComputeVagueFrameDepth(self, fp);
             if (frameDepth < pCtrl->frameDepth) {
                 doStop = true;
-#ifndef LOG_NDEBUG
                 msg = "method pop";
-#endif
             }
         }
 

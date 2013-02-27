@@ -2231,9 +2231,7 @@ static bool handleEasyMultiply(CompilationUnit *cUnit,
     // Can we simplify this multiplication?
     bool powerOfTwo = false;
     bool popCountLE2 = false;
-#ifndef NDEBUG
-    bool powerOfTwoMinusOne = false; // used only in assert
-#endif
+    bool powerOfTwoMinusOne = false;
     if (lit < 2) {
         // Avoid special cases.
         return false;
@@ -2242,9 +2240,7 @@ static bool handleEasyMultiply(CompilationUnit *cUnit,
     } else if (isPopCountLE2(lit)) {
         popCountLE2 = true;
     } else if (isPowerOfTwo(lit + 1)) {
-#ifndef NDEBUG
         powerOfTwoMinusOne = true;
-#endif
     } else {
         return false;
     }
