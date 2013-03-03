@@ -37,6 +37,7 @@
 #include <cutils/multiuser.h>
 #include <sched.h>
 #include <sys/utsname.h>
+#include <sys/capability.h>
 
 #if defined(HAVE_PRCTL)
 # include <sys/prctl.h>
@@ -584,6 +585,21 @@ static pid_t forkAndSpecializeCommon(const u4* args, bool isSystemServer)
             }
         }
 
+        for (int i = 0; prctl(PR_CAPBSET_READ, i, 0, 0, 0) >= 0; i++) {
+            err = prctl(PR_CAPBSET_DROP, i, 0, 0, 0);
+            if (err < 0) {
+                if (errno == EINVAL) {
+                    ALOGW("PR_CAPBSET_DROP %d failed: %s. "
+                          "Please make sure your kernel is compiled with "
+                          "file capabilities support enabled.",
+                          i, strerror(errno));
+                } else {
+                    ALOGE("PR_CAPBSET_DROP %d failed: %s.", i, strerror(errno));
+                    dvmAbort();
+                }
+            }
+        }
+
 #endif /* HAVE_ANDROID_OS */
 
         if (mountMode != MOUNT_EXTERNAL_NONE) {
@@ -615,15 +631,15 @@ static pid_t forkAndSpecializeCommon(const u4* args, bool isSystemServer)
             dvmAbort();
         }
 
-        err = setgid(gid);
+        err = setresgid(gid, gid, gid);
         if (err < 0) {
-            ALOGE("cannot setgid(%d): %s", gid, strerror(errno));
+            ALOGE("cannot setresgid(%d): %s", gid, strerror(errno));
             dvmAbort();
         }
 
-        err = setuid(uid);
+        err = setresuid(uid, uid, uid);
         if (err < 0) {
-            ALOGE("cannot setuid(%d): %s", uid, strerror(errno));
+            ALOGE("cannot setresuid(%d): %s", uid, strerror(errno));
             dvmAbort();
         }
 
@@ -727,22 +743,6 @@ static void Dalvik_dalvik_system_Zygote_forkSystemServer(
     RETURN_INT(pid);
 }
 
-/* native private static void nativeExecShell(String command);
- */
-static void Dalvik_dalvik_system_Zygote_execShell(
-        const u4* args, JValue* pResult)
-{
-    StringObject* command = (StringObject*)args[0];
-
-    const char *argp[] = {_PATH_BSHELL, "-c", NULL, NULL};
-    argp[2] = dvmCreateCstrFromString(command);
-
-    ALOGI("Exec: %s %s %s", argp[0], argp[1], argp[2]);
-
-    execv(_PATH_BSHELL, (char**)argp);
-    exit(127);
-}
-
 const DalvikNativeMethod dvm_dalvik_system_Zygote[] = {
     { "nativeFork", "()I",
       Dalvik_dalvik_system_Zygote_fork },
@@ -750,7 +750,5 @@ const DalvikNativeMethod dvm_dalvik_system_Zygote[] = {
       Dalvik_dalvik_system_Zygote_forkAndSpecialize },
     { "nativeForkSystemServer", "(II[II[[IJJ)I",
       Dalvik_dalvik_system_Zygote_forkSystemServer },
-    { "nativeExecShell", "(Ljava/lang/String;)V",
-      Dalvik_dalvik_system_Zygote_execShell },
     { NULL, NULL, NULL },
 };
