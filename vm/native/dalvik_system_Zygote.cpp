@@ -37,7 +37,6 @@
 #include <cutils/multiuser.h>
 #include <sched.h>
 #include <sys/utsname.h>
-#include <sys/capability.h>
 
 #if defined(HAVE_PRCTL)
 # include <sys/prctl.h>
